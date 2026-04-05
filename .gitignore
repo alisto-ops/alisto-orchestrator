@@ -1,0 +1,11 @@
+# Node dependencies
+node_modules/
+
+# Downloaded Server Jars and Worlds
+servers/
+
+# Downloaded Network Agents
+bin/
+
+# Environment Variables (for when we add Supabase later)
+.env

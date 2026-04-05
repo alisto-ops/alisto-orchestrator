@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Alisto Orchestrator</title>
+    <style>
+      body {
+        background-color: #1e1e2e; color: #cdd6f4;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0; padding: 40px; display: flex; justify-content: center;
+      }
+      .container {
+        width: 100%; max-width: 900px; background-color: #313244;
+        padding: 30px; border-radius: 12px; box-shadow: 0 8px 15px rgba(0,0,0,0.4);
+      }
+      h1 { text-align: center; margin-top: 0; font-size: 2.5rem; }
+      .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;}
+      select, button, input {
+        padding: 12px; font-size: 1rem; border-radius: 8px; border: none; outline: none;
+      }
+      select { background-color: #45475a; color: white; flex-grow: 1; cursor: pointer;}
+      button { font-weight: bold; cursor: pointer; transition: 0.2s; }
+      button:hover { transform: scale(1.02); }
+      .console {
+        background-color: #11111b; color: #a6adc8; height: 350px;
+        padding: 20px; border-radius: 8px; font-family: monospace; overflow-y: auto;
+      }
+      /* Properties Modal Styles */
+      #props-modal {
+        display: none; background-color: #11111b; padding: 20px; border-radius: 8px; 
+        margin-bottom: 20px; border: 1px solid #cba6f7; max-height: 400px; overflow-y: auto;
+      }
+      .prop-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;}
+      .prop-row label { font-size: 0.9rem; color: #a6adc8;}
+      .prop-row input, .prop-row select { background-color: #45475a; color: white; padding: 6px; width: 200px;}
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Alisto Orchestrator</h1>
+
+      <div class="controls">
+        <select id="server-type">
+          <optgroup label="Standard">
+            <option value="vanilla">Vanilla</option>
+            <option value="snapshot">Snapshot</option>
+          </optgroup>
+          <optgroup label="High Performance">
+            <option value="paper" selected>Paper</option>
+            <option value="purpur">Purpur</option>
+            <option value="folia">Folia</option>
+          </optgroup>
+          <optgroup label="Modded">
+            <option value="fabric">Fabric</option>
+            <option value="quilt">Quilt</option>
+            <option value="forge">Forge (Requires Installer)</option>
+            <option value="neoforge">NeoForge (Requires Installer)</option>
+          </optgroup>
+          <optgroup label="Legacy/Other">
+            <option value="spigot">Spigot (Requires BuildTools)</option>
+            <option value="glowstone">Glowstone</option>
+            <option value="arclight">Arclight</option>
+          </optgroup>
+        </select>
+        
+        <select id="mc-version">
+          <option value="1.20.4">1.20.4</option>
+          <option value="1.19.4">1.19.4</option>
+          <option value="1.16.5">1.16.5</option>
+        </select>
+
+        <select id="ram-select">
+          <option value="2">2 GB RAM</option>
+          <option value="4" selected>4 GB RAM</option>
+          <option value="6">6 GB RAM</option>
+          <option value="8">8 GB RAM</option>
+        </select>
+
+        <button id="props-btn" style="background-color: #cba6f7;">⚙️ Config</button>
+        <label style="display:flex; align-items:center; gap:5px; font-size:0.9rem;"><input type="checkbox" id="tunnel-toggle" checked> Enable Playit.gg</label>
+        <button id="start-btn" style="background-color: #a6e3a1; flex-grow: 1;">Start Server</button>
+        <button id="stop-btn" style="background-color: #f38ba8;">Stop</button>
+      </div>
+
+      <div id="props-modal">
+        <h2 style="margin-top: 0; color: #cba6f7; border-bottom: 1px solid #45475a; padding-bottom: 10px;">Server Settings</h2>
+        <div id="props-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;"></div>
+        <button id="save-props-btn" style="background-color: #a6e3a1; margin-top: 20px; width: 100%;">Apply & Save Changes</button>
+      </div>
+
+      <div class="console">
+        > Orchestrator Engine Online.<br>
+        > All APIs loaded and ready.
+      </div>
+    </div>
+
+    <script>
+      const { downloadServer, startMinecraftProcess, stopMinecraftProcess, readProperties, writeProperties, setupPlayit, startPlayit, stopPlayit } = require('./engine.js');
+
+      const startBtn = document.getElementById('start-btn');
+      const stopBtn = document.getElementById('stop-btn'); 
+      const propsBtn = document.getElementById('props-btn');
+      const typeSelect = document.getElementById('server-type'); 
+      const versionSelect = document.getElementById('mc-version');
+      const ramSelect = document.getElementById('ram-select');
+      
+      const propsModal = document.getElementById('props-modal');
+      const propsList = document.getElementById('props-list');
+      const consoleBox = document.querySelector('.console');
+
+      function logToConsole(message) {
+        // We handle link formatting directly in engine.js now, so this stays clean
+        consoleBox.innerHTML += `<br>> ${message}`;
+        consoleBox.scrollTop = consoleBox.scrollHeight;
+      }
+
+      // START BUTTON LOGIC
+      startBtn.addEventListener('click', async () => {
+        startBtn.disabled = true; startBtn.innerText = "Processing..."; startBtn.style.backgroundColor = "#f9e2af"; 
+        
+        logToConsole(`Initializing setup for ${typeSelect.value.toUpperCase()} ${versionSelect.value}...`);
+        const downloadedJarPath = await downloadServer(typeSelect.value, versionSelect.value);
+        
+        if (downloadedJarPath) {
+            if (document.getElementById('tunnel-toggle').checked) {
+                await setupPlayit();
+                startPlayit();
+            }
+            logToConsole(`Commencing boot sequence...`);
+            startMinecraftProcess(downloadedJarPath, ramSelect.value);
+        }
+        
+        startBtn.disabled = false; startBtn.innerText = "Start Server"; startBtn.style.backgroundColor = "#a6e3a1"; 
+      });
+
+      // STOP BUTTON LOGIC
+      stopBtn.addEventListener('click', () => {
+          stopMinecraftProcess();
+          if (document.getElementById('tunnel-toggle').checked) {
+              stopPlayit();
+          }
+      });
+
+      // CONFIG BUTTON LOGIC (The Native Editor)
+      propsBtn.addEventListener('click', () => {
+          const currentProps = readProperties();
+          if (!currentProps) {
+              logToConsole(`[Error] You must boot a server at least once to generate the config file!`);
+              return;
+          }
+
+          propsList.innerHTML = ''; 
+          
+          for (const [key, value] of Object.entries(currentProps)) {
+              const div = document.createElement('div');
+              div.className = 'prop-row';
+
+              const label = document.createElement('label');
+              label.innerText = key;
+
+              let input;
+              if (value === 'true' || value === 'false') {
+                  input = document.createElement('select');
+                  input.innerHTML = `<option value="true" ${value === 'true' ? 'selected' : ''}>True</option>
+                                     <option value="false" ${value === 'false' ? 'selected' : ''}>False</option>`;
+              } else {
+                  input = document.createElement('input');
+                  input.type = 'text';
+                  input.value = value;
+              }
+              
+              input.dataset.key = key;
+              div.appendChild(label); div.appendChild(input); propsList.appendChild(div);
+          }
+          
+          propsModal.style.display = propsModal.style.display === 'none' || propsModal.style.display === '' ? 'block' : 'none';
+      });
+
+      // SAVE CONFIG BUTTON LOGIC
+      document.getElementById('save-props-btn').addEventListener('click', () => {
+          const newProps = {};
+          propsList.querySelectorAll('input, select').forEach(input => newProps[input.dataset.key] = input.value);
+          writeProperties(newProps);
+          propsModal.style.display = 'none';
+          logToConsole(`Server properties applied! Changes take effect on next boot.`);
+      });
+
+      // CONSOLE OVERRIDES
+      const originalLog = console.log;
+      console.log = function(message) { logToConsole(message); originalLog(message); };
+      const originalError = console.error;
+      console.error = function(message) { logToConsole(`<span style="color: #f38ba8;">${message}</span>`); originalError(message); };
+    </script>
+  </body>
+</html>
