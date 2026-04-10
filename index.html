@@ -5,13 +5,46 @@
     <title>Alisto Orchestrator</title>
     <style>
       body {
-        background-color: #1e1e2e; color: #cdd6f4;
+        background-color: #1e1e2e;
+        color: #cdd6f4;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        margin: 0; padding: 40px; display: flex; justify-content: center;
+        margin: 0;
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
       }
-      .container {
-        width: 100%; max-width: 900px; background-color: #313244;
-        padding: 30px; border-radius: 12px; box-shadow: 0 8px 15px rgba(0,0,0,0.4);
+      .sidebar {
+        width: 250px;
+        background-color: #181825;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        color: #cdd6f4;
+      }
+      .sidebar h2 {
+        text-align: center;
+        margin-top: 10px;
+        margin-bottom: 30px;
+        font-size: 1.8rem;
+      }
+      .nav-btn {
+        background: none;
+        border: none;
+        color: #cdd6f4;
+        padding: 15px;
+        text-align: left;
+        font-size: 1.1rem;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-bottom: 10px;
+        transition: background-color 0.2s;
+      }
+      .nav-btn:hover {
+        background-color: #313244;
+      }
+      .nav-btn:disabled {
+        color: #6c7086;
+        cursor: not-allowed;
       }
       h1 { text-align: center; margin-top: 0; font-size: 2.5rem; }
       .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;}
@@ -19,8 +52,8 @@
         padding: 12px; font-size: 1rem; border-radius: 8px; border: none; outline: none;
       }
       select { background-color: #45475a; color: white; flex-grow: 1; cursor: pointer;}
-      button { font-weight: bold; cursor: pointer; transition: 0.2s; }
-      button:hover { transform: scale(1.02); }
+      button { font-weight: bold; cursor: pointer; transition: background-color 0.2s, transform 0.2s; }
+      button:hover:not(.nav-btn) { transform: scale(1.02); }
       .console {
         background-color: #11111b; color: #a6adc8; height: 350px;
         padding: 20px; border-radius: 8px; font-family: monospace; overflow-y: auto;
@@ -33,69 +66,97 @@
       .prop-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;}
       .prop-row label { font-size: 0.9rem; color: #a6adc8;}
       .prop-row input, .prop-row select { background-color: #45475a; color: white; padding: 6px; width: 200px;}
+      .main-content {
+        flex-grow: 1;
+        padding: 40px;
+        background-color: #1e1e2e;
+        overflow-y: auto;
+      }
+      .page {
+        display: none;
+      }
+      .page.active {
+        display: block;
+      }
     </style>
   </head>
   <body>
-    <div class="container">
-      <h1>Alisto Orchestrator</h1>
+    <div class="sidebar">
+      <h2>Alisto</h2>
+      <button id="nav-dashboard" class="nav-btn">Dashboard</button>
+      <button id="nav-console" class="nav-btn">Console</button>
+      <button id="nav-plugins" class="nav-btn" disabled>Plugins</button>
+    </div>
 
-      <div class="controls">
-        <select id="server-type">
-          <optgroup label="Standard">
-            <option value="vanilla">Vanilla</option>
-            <option value="snapshot">Snapshot</option>
-          </optgroup>
-          <optgroup label="High Performance">
-            <option value="paper" selected>Paper</option>
-            <option value="purpur">Purpur</option>
-            <option value="folia">Folia</option>
-          </optgroup>
-          <optgroup label="Modded">
-            <option value="fabric">Fabric</option>
-            <option value="quilt">Quilt</option>
-            <option value="forge">Forge (Requires Installer)</option>
-            <option value="neoforge">NeoForge (Requires Installer)</option>
-          </optgroup>
-          <optgroup label="Legacy/Other">
-            <option value="spigot">Spigot (Requires BuildTools)</option>
-            <option value="glowstone">Glowstone</option>
-            <option value="arclight">Arclight</option>
-          </optgroup>
-        </select>
-        
-        <select id="mc-version">
-          <option value="1.20.4">1.20.4</option>
-          <option value="1.19.4">1.19.4</option>
-          <option value="1.16.5">1.16.5</option>
-        </select>
-
-        <select id="ram-select">
-          <option value="2">2 GB RAM</option>
-          <option value="4" selected>4 GB RAM</option>
-          <option value="6">6 GB RAM</option>
-          <option value="8">8 GB RAM</option>
-        </select>
-
-        <button id="props-btn" style="background-color: #cba6f7;">⚙️ Config</button>
-        <label style="display:flex; align-items:center; gap:5px; font-size:0.9rem;"><input type="checkbox" id="tunnel-toggle" checked> Enable Playit.gg</label>
-        <button id="start-btn" style="background-color: #a6e3a1; flex-grow: 1;">Start Server</button>
-        <button id="stop-btn" style="background-color: #f38ba8;">Stop</button>
+    <div class="main-content">
+      <div id="page-dashboard" class="page active">
+        <h1>Dashboard</h1>
+        <div class="controls">
+          <select id="server-type">
+            <optgroup label="Standard">
+              <option value="vanilla">Vanilla</option>
+              <option value="snapshot">Snapshot</option>
+            </optgroup>
+            <optgroup label="High Performance">
+              <option value="paper" selected>Paper</option>
+              <option value="purpur">Purpur</option>
+              <option value="folia">Folia</option>
+            </optgroup>
+            <optgroup label="Modded">
+              <option value="fabric">Fabric</option>
+              <option value="quilt">Quilt</option>
+              <option value="forge">Forge (Requires Installer)</option>
+              <option value="neoforge">NeoForge (Requires Installer)</option>
+            </optgroup>
+            <optgroup label="Legacy/Other">
+              <option value="spigot">Spigot (Requires BuildTools)</option>
+              <option value="glowstone">Glowstone</option>
+              <option value="arclight">Arclight</option>
+            </optgroup>
+          </select>
+          
+          <select id="mc-version">
+            <option value="1.20.4">1.20.4</option>
+            <option value="1.19.4">1.19.4</option>
+            <option value="1.16.5">1.16.5</option>
+          </select>
+  
+          <select id="ram-select">
+            <option value="2">2 GB RAM</option>
+            <option value="4" selected>4 GB RAM</option>
+            <option value="6">6 GB RAM</option>
+            <option value="8">8 GB RAM</option>
+          </select>
+  
+          <button id="props-btn" style="background-color: #cba6f7;">⚙️ Config</button>
+          <label style="display:flex; align-items:center; gap:5px; font-size:0.9rem;"><input type="checkbox" id="tunnel-toggle" checked> Enable Playit.gg</label>
+          <button id="start-btn" style="background-color: #a6e3a1; flex-grow: 1;">Start Server</button>
+          <button id="stop-btn" style="background-color: #f38ba8;">Stop</button>
+        </div>
+  
+        <div id="props-modal">
+          <h2 style="margin-top: 0; color: #cba6f7; border-bottom: 1px solid #45475a; padding-bottom: 10px;">Server Settings</h2>
+          <div id="props-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;"></div>
+          <button id="save-props-btn" style="background-color: #a6e3a1; margin-top: 20px; width: 100%;">Apply & Save Changes</button>
+        </div>
       </div>
 
-      <div id="props-modal">
-        <h2 style="margin-top: 0; color: #cba6f7; border-bottom: 1px solid #45475a; padding-bottom: 10px;">Server Settings</h2>
-        <div id="props-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;"></div>
-        <button id="save-props-btn" style="background-color: #a6e3a1; margin-top: 20px; width: 100%;">Apply & Save Changes</button>
-      </div>
-
-      <div class="console">
-        > Orchestrator Engine Online.<br>
-        > All APIs loaded and ready.
+      <div id="page-console" class="page">
+        <h1>Server Console</h1>
+        <div class="console">
+          > Orchestrator Engine Online.<br>
+          > All APIs loaded and ready.
+        </div>
+  
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+          <input type="text" id="cmd-input" placeholder="Enter server command (e.g. op Alisto)..." style="flex-grow: 1;">
+          <button id="send-cmd-btn" style="background-color: #89b4fa; width: 100px; color: #1e1e2e;">Send</button>
+        </div>
       </div>
     </div>
 
     <script>
-      const { downloadServer, startMinecraftProcess, stopMinecraftProcess, readProperties, writeProperties, setupPlayit, startPlayit, stopPlayit } = require('./engine.js');
+      const { downloadServer, startMinecraftProcess, stopMinecraftProcess, readProperties, writeProperties, setupPlayit, startPlayit, stopPlayit, getPublicIP, sendCommand } = require('./engine.js');
 
       const startBtn = document.getElementById('start-btn');
       const stopBtn = document.getElementById('stop-btn'); 
@@ -107,6 +168,8 @@
       const propsModal = document.getElementById('props-modal');
       const propsList = document.getElementById('props-list');
       const consoleBox = document.querySelector('.console');
+      const cmdInput = document.getElementById('cmd-input');
+      const sendCmdBtn = document.getElementById('send-cmd-btn');
 
       function logToConsole(message) {
         // We handle link formatting directly in engine.js now, so this stays clean
@@ -185,11 +248,50 @@
           logToConsole(`Server properties applied! Changes take effect on next boot.`);
       });
 
+      // COMMAND SEND LOGIC
+      sendCmdBtn.addEventListener('click', () => {
+        const cmd = cmdInput.value.trim();
+        if (cmd) {
+          sendCommand(cmd);
+          cmdInput.value = '';
+        }
+      });
+
+      cmdInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          sendCmdBtn.click();
+        }
+      });
+
+      // --- UI NAVIGATION ---
+      const navDashboardBtn = document.getElementById('nav-dashboard');
+      const navConsoleBtn = document.getElementById('nav-console');
+
+      const pageDashboard = document.getElementById('page-dashboard');
+      const pageConsole = document.getElementById('page-console');
+
+      navDashboardBtn.addEventListener('click', () => {
+          pageDashboard.classList.add('active');
+          pageConsole.classList.remove('active');
+      });
+
+      navConsoleBtn.addEventListener('click', () => {
+          pageConsole.classList.add('active');
+          pageDashboard.classList.remove('active');
+      });
+
       // CONSOLE OVERRIDES
       const originalLog = console.log;
       console.log = function(message) { logToConsole(message); originalLog(message); };
       const originalError = console.error;
       console.error = function(message) { logToConsole(`<span style="color: #f38ba8;">${message}</span>`); originalError(message); };
+    
+      indow.addEventListener('beforeunload', () => {
+          console.log("[System] App closing, terminating background processes...");
+          stopMinecraftProcess();
+          stopPlayit();
+      });
+      
     </script>
   </body>
 </html>

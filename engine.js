@@ -72,7 +72,7 @@ function startMinecraftProcess(jarPath, ram) {
     fs.writeFileSync(path.join(serverFolder, 'eula.txt'), 'eula=true');
     console.log(`[System] Booting ${jarName} with ${ram}GB of RAM...`);
 
-    currentMcProcess = spawn('java', [`-Xmx${ram}G`, '-jar', jarName, 'nogui'], { cwd: serverFolder });
+    currentMcProcess = spawn('java', ['-Xmx' + ram + 'G', '-Dterminal.jline=false', '-jar', jarName, 'nogui'], { cwd: serverFolder });
 
     currentMcProcess.stdout.on('data', (data) => console.log(data.toString().trim()));
     currentMcProcess.stderr.on('data', (data) => console.error(`[Server Error] ${data.toString().trim()}`));
@@ -89,6 +89,15 @@ function stopMinecraftProcess() {
     } else {
         console.log(`[System] No server is currently running.`);
     }
+}
+
+function sendCommand(cmd) {
+    if (!currentMcProcess) {
+        console.error(`[Error] Server is not currently running.`);
+        return;
+    }
+    currentMcProcess.stdin.write(cmd + '\n');
+    console.log(`[Command Sent] ${cmd}`);
 }
 
 // --- 3. NATIVE PROPERTIES EDITOR ---
@@ -201,4 +210,4 @@ function getPublicIP() {
 }
 
 // Don't forget to export the new getPublicIP function!
-module.exports = { downloadServer, startMinecraftProcess, stopMinecraftProcess, readProperties, writeProperties, setupPlayit, startPlayit, stopPlayit, getPublicIP };
+module.exports = { downloadServer, startMinecraftProcess, stopMinecraftProcess, readProperties, writeProperties, setupPlayit, startPlayit, stopPlayit, getPublicIP, sendCommand };
