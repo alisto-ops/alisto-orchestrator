@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Alisto Orchestrator</title>
+    <title>Magnesium Orchestrator</title>
     <style>
       body {
         background-color: #1e1e2e;
@@ -58,7 +58,6 @@
         background-color: #11111b; color: #a6adc8; height: 350px;
         padding: 20px; border-radius: 8px; font-family: monospace; overflow-y: auto;
       }
-      /* Properties Modal Styles */
       #props-modal {
         display: none; background-color: #11111b; padding: 20px; border-radius: 8px; 
         margin-bottom: 20px; border: 1px solid #cba6f7; max-height: 400px; overflow-y: auto;
@@ -82,7 +81,7 @@
   </head>
   <body>
     <div class="sidebar">
-      <h2>Alisto</h2>
+      <h2>Magnesium</h2>
       <button id="nav-dashboard" class="nav-btn">Dashboard</button>
       <button id="nav-console" class="nav-btn">Console</button>
       <button id="nav-plugins" class="nav-btn" disabled>Plugins</button>
@@ -129,7 +128,13 @@
           </select>
   
           <button id="props-btn" style="background-color: #cba6f7;">⚙️ Config</button>
-          <label style="display:flex; align-items:center; gap:5px; font-size:0.9rem;"><input type="checkbox" id="tunnel-toggle" checked> Enable Playit.gg</label>
+          <label style="display:flex; align-items:center; gap:5px; font-size:0.9rem;">
+            <input type="checkbox" id="tunnel-toggle" checked> Enable Playit.gg
+          </label>
+          <label style="display:flex; align-items:center; gap:5px; font-size:0.9rem; color: #fab387;">
+            <input type="checkbox" id="cracked-toggle"> Cracked Mode
+          </label>
+          <button id="backup-btn" style="background-color: #89b4fa; color: #1e1e2e;">☁️ Backup World</button>
           <button id="start-btn" style="background-color: #a6e3a1; flex-grow: 1;">Start Server</button>
           <button id="stop-btn" style="background-color: #f38ba8;">Stop</button>
         </div>
@@ -149,15 +154,14 @@
         </div>
   
         <div style="display: flex; gap: 10px; margin-top: 10px;">
-          <input type="text" id="cmd-input" placeholder="Enter server command (e.g. op Alisto)..." style="flex-grow: 1;">
+          <input type="text" id="cmd-input" placeholder="Enter server command (e.g. op Yagyapreet)..." style="flex-grow: 1;">
           <button id="send-cmd-btn" style="background-color: #89b4fa; width: 100px; color: #1e1e2e;">Send</button>
         </div>
       </div>
     </div>
 
     <script>
-      const { downloadServer, startMinecraftProcess, stopMinecraftProcess, readProperties, writeProperties, setupPlayit, startPlayit, stopPlayit, getPublicIP, sendCommand } = require('./engine.js');
-
+      const { downloadServer, startMinecraftProcess, stopMinecraftProcess, readProperties, writeProperties, setupPlayit, startPlayit, stopPlayit, getPublicIP, sendCommand, forceOfflineMode, waitForPublicIP, backupWorldToDrive } = require('./engine.js');
       const startBtn = document.getElementById('start-btn');
       const stopBtn = document.getElementById('stop-btn'); 
       const propsBtn = document.getElementById('props-btn');
@@ -172,28 +176,49 @@
       const sendCmdBtn = document.getElementById('send-cmd-btn');
 
       function logToConsole(message) {
-        // We handle link formatting directly in engine.js now, so this stays clean
         consoleBox.innerHTML += `<br>> ${message}`;
         consoleBox.scrollTop = consoleBox.scrollHeight;
       }
 
       // START BUTTON LOGIC
       startBtn.addEventListener('click', async () => {
-        startBtn.disabled = true; startBtn.innerText = "Processing..."; startBtn.style.backgroundColor = "#f9e2af"; 
+        startBtn.disabled = true; 
+        startBtn.innerText = "Downloading JAR..."; 
+        startBtn.style.backgroundColor = "#f9e2af"; 
         
         logToConsole(`Initializing setup for ${typeSelect.value.toUpperCase()} ${versionSelect.value}...`);
         const downloadedJarPath = await downloadServer(typeSelect.value, versionSelect.value);
         
         if (downloadedJarPath) {
+            forceOfflineMode(document.getElementById('cracked-toggle').checked);
+
             if (document.getElementById('tunnel-toggle').checked) {
+                startBtn.innerText = "Provisioning Network..."; 
                 await setupPlayit();
                 startPlayit();
+                
+                try {
+                    await waitForPublicIP(20000); 
+                } catch (e) {
+                    logToConsole(`<span style="color: #f38ba8;">[Network Warning] IP took too long to generate. Booting anyway...</span>`);
+                }
             }
+            
+            startBtn.innerText = "Server Running"; 
+            startBtn.style.backgroundColor = "#a6e3a1"; 
             logToConsole(`Commencing boot sequence...`);
-            startMinecraftProcess(downloadedJarPath, ramSelect.value);
+            
+            // THE FIX: Passes a callback so the button unlocks when Java exits
+            startMinecraftProcess(downloadedJarPath, ramSelect.value, () => {
+                startBtn.disabled = false; 
+                startBtn.innerText = "Start Server"; 
+                startBtn.style.backgroundColor = "#a6e3a1"; 
+            });
+        } else {
+            startBtn.disabled = false; 
+            startBtn.innerText = "Start Server"; 
+            startBtn.style.backgroundColor = "#a6e3a1"; 
         }
-        
-        startBtn.disabled = false; startBtn.innerText = "Start Server"; startBtn.style.backgroundColor = "#a6e3a1"; 
       });
 
       // STOP BUTTON LOGIC
@@ -204,7 +229,34 @@
           }
       });
 
-      // CONFIG BUTTON LOGIC (The Native Editor)
+      // BACKUP BUTTON LOGIC
+      document.getElementById('backup-btn').addEventListener('click', async () => {
+          const btn = document.getElementById('backup-btn');
+          btn.disabled = true;
+          btn.innerText = "Zipping...";
+          btn.style.backgroundColor = "#f9e2af";
+          logToConsole(`[System] Compressing world data...`);
+          
+          const success = await backupWorldToDrive();
+          
+          if (success) {
+              btn.innerText = "Backup Saved!";
+              btn.style.backgroundColor = "#a6e3a1";
+              logToConsole(`<span style="color: #a6e3a1;">[System] World successfully uploaded to Google Drive!</span>`);
+          } else {
+              btn.innerText = "Backup Failed";
+              btn.style.backgroundColor = "#f38ba8";
+              logToConsole(`<span style="color: #f38ba8;">[System Error] Failed to upload backup. Check console logs.</span>`);
+          }
+          
+          setTimeout(() => {
+              btn.disabled = false;
+              btn.innerText = "☁️ Backup World";
+              btn.style.backgroundColor = "#89b4fa";
+          }, 4000);
+      });
+
+      // CONFIG BUTTON LOGIC
       propsBtn.addEventListener('click', () => {
           const currentProps = readProperties();
           if (!currentProps) {
@@ -266,7 +318,6 @@
       // --- UI NAVIGATION ---
       const navDashboardBtn = document.getElementById('nav-dashboard');
       const navConsoleBtn = document.getElementById('nav-console');
-
       const pageDashboard = document.getElementById('page-dashboard');
       const pageConsole = document.getElementById('page-console');
 
@@ -280,13 +331,24 @@
           pageDashboard.classList.remove('active');
       });
 
-      // CONSOLE OVERRIDES
+      // --- CONSOLE OVERRIDES & HIGHLIGHTER ---
       const originalLog = console.log;
-      console.log = function(message) { logToConsole(message); originalLog(message); };
+      console.log = function(message) { 
+          if (typeof message === 'string' && message.includes('[Magnesium Network] IP Address:')) {
+              logToConsole(`<span style="color: #a6e3a1; font-weight: bold;">${message}</span>`);
+          } else {
+              logToConsole(message); 
+          }
+          originalLog(message); 
+      };
+      
       const originalError = console.error;
-      console.error = function(message) { logToConsole(`<span style="color: #f38ba8;">${message}</span>`); originalError(message); };
+      console.error = function(message) { 
+          logToConsole(`<span style="color: #f38ba8;">${message}</span>`); 
+          originalError(message); 
+      };
     
-      indow.addEventListener('beforeunload', () => {
+      window.addEventListener('beforeunload', () => {
           console.log("[System] App closing, terminating background processes...");
           stopMinecraftProcess();
           stopPlayit();

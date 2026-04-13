@@ -10,14 +10,11 @@ function createWindow () {
     }
   });
 
-  // Load the UI we just made
   mainWindow.loadFile('index.html');
 }
 
-// When Electron is fully loaded, spawn the window
 app.whenReady().then(createWindow);
 
-// Quit the app when all windows are closed (standard Windows behavior)
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
