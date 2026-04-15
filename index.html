@@ -1,359 +1,308 @@
 <!DOCTYPE html>
-<html>
-  <head>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
-    <title>Magnesium Orchestrator</title>
-    <style>
-      body {
-        background-color: #1e1e2e;
-        color: #cdd6f4;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        margin: 0;
-        display: flex;
-        height: 100vh;
-        overflow: hidden;
-      }
-      .sidebar {
-        width: 250px;
-        background-color: #181825;
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        color: #cdd6f4;
-      }
-      .sidebar h2 {
-        text-align: center;
-        margin-top: 10px;
-        margin-bottom: 30px;
-        font-size: 1.8rem;
-      }
-      .nav-btn {
-        background: none;
-        border: none;
-        color: #cdd6f4;
-        padding: 15px;
-        text-align: left;
-        font-size: 1.1rem;
-        border-radius: 8px;
-        cursor: pointer;
-        margin-bottom: 10px;
-        transition: background-color 0.2s;
-      }
-      .nav-btn:hover {
-        background-color: #313244;
-      }
-      .nav-btn:disabled {
-        color: #6c7086;
-        cursor: not-allowed;
-      }
-      h1 { text-align: center; margin-top: 0; font-size: 2.5rem; }
-      .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;}
-      select, button, input {
-        padding: 12px; font-size: 1rem; border-radius: 8px; border: none; outline: none;
-      }
-      select { background-color: #45475a; color: white; flex-grow: 1; cursor: pointer;}
-      button { font-weight: bold; cursor: pointer; transition: background-color 0.2s, transform 0.2s; }
-      button:hover:not(.nav-btn) { transform: scale(1.02); }
-      .console {
-        background-color: #11111b; color: #a6adc8; height: 350px;
-        padding: 20px; border-radius: 8px; font-family: monospace; overflow-y: auto;
-      }
-      #props-modal {
-        display: none; background-color: #11111b; padding: 20px; border-radius: 8px; 
-        margin-bottom: 20px; border: 1px solid #cba6f7; max-height: 400px; overflow-y: auto;
-      }
-      .prop-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;}
-      .prop-row label { font-size: 0.9rem; color: #a6adc8;}
-      .prop-row input, .prop-row select { background-color: #45475a; color: white; padding: 6px; width: 200px;}
-      .main-content {
-        flex-grow: 1;
-        padding: 40px;
-        background-color: #1e1e2e;
-        overflow-y: auto;
-      }
-      .page {
-        display: none;
-      }
-      .page.active {
-        display: block;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="sidebar">
-      <h2>Magnesium</h2>
-      <button id="nav-dashboard" class="nav-btn">Dashboard</button>
-      <button id="nav-console" class="nav-btn">Console</button>
-      <button id="nav-plugins" class="nav-btn" disabled>Plugins</button>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magnesium | Console</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header class="top-header">
+        <div class="header-logo"><i class="fas fa-play-circle" style="transform: rotate(90deg);"></i> MAGNESIUM</div>
+        <div class="header-right">
+            <div class="header-btn"><i class="fas fa-server"></i> Servers</div>
+            <div class="header-user"><i class="fas fa-user"></i> Account <i class="fas fa-caret-down"></i></div>
+            <i class="fas fa-question-circle" style="margin-left: 10px; cursor: pointer;"></i>
+        </div>
+    </header>
+
+    <div class="breadcrumb-bar">
+        <div class="breadcrumb-path"><i class="fas fa-server"></i> Servers <i class="fas fa-chevron-right" style="font-size: 0.7rem; margin: 0 5px;"></i> <span>Magnesium Main</span></div>
+        <button class="btn-share" onclick="document.getElementById('tunnel-toggle').click()">
+            <input type="checkbox" id="tunnel-toggle" checked style="accent-color: var(--aternos-blue); cursor: pointer;"> Enable Playit.gg
+        </button>
     </div>
 
-    <div class="main-content">
-      <div id="page-dashboard" class="page active">
-        <h1>Dashboard</h1>
-        <div class="controls">
-          <select id="server-type">
-            <optgroup label="Standard">
-              <option value="vanilla">Vanilla</option>
-              <option value="snapshot">Snapshot</option>
-            </optgroup>
-            <optgroup label="High Performance">
-              <option value="paper" selected>Paper</option>
-              <option value="purpur">Purpur</option>
-              <option value="folia">Folia</option>
-            </optgroup>
-            <optgroup label="Modded">
-              <option value="fabric">Fabric</option>
-              <option value="quilt">Quilt</option>
-              <option value="forge">Forge (Requires Installer)</option>
-              <option value="neoforge">NeoForge (Requires Installer)</option>
-            </optgroup>
-            <optgroup label="Legacy/Other">
-              <option value="spigot">Spigot (Requires BuildTools)</option>
-              <option value="glowstone">Glowstone</option>
-              <option value="arclight">Arclight</option>
-            </optgroup>
-          </select>
-          
-          <select id="mc-version">
-            <option value="1.20.4">1.20.4</option>
-            <option value="1.19.4">1.19.4</option>
-            <option value="1.16.5">1.16.5</option>
-          </select>
-  
-          <select id="ram-select">
-            <option value="2">2 GB RAM</option>
-            <option value="4" selected>4 GB RAM</option>
-            <option value="6">6 GB RAM</option>
-            <option value="8">8 GB RAM</option>
-          </select>
-  
-          <button id="props-btn" style="background-color: #cba6f7;">⚙️ Config</button>
-          <label style="display:flex; align-items:center; gap:5px; font-size:0.9rem;">
-            <input type="checkbox" id="tunnel-toggle" checked> Enable Playit.gg
-          </label>
-          <label style="display:flex; align-items:center; gap:5px; font-size:0.9rem; color: #fab387;">
-            <input type="checkbox" id="cracked-toggle"> Cracked Mode
-          </label>
-          <button id="backup-btn" style="background-color: #89b4fa; color: #1e1e2e;">☁️ Backup World</button>
-          <button id="start-btn" style="background-color: #a6e3a1; flex-grow: 1;">Start Server</button>
-          <button id="stop-btn" style="background-color: #f38ba8;">Stop</button>
-        </div>
-  
-        <div id="props-modal">
-          <h2 style="margin-top: 0; color: #cba6f7; border-bottom: 1px solid #45475a; padding-bottom: 10px;">Server Settings</h2>
-          <div id="props-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;"></div>
-          <button id="save-props-btn" style="background-color: #a6e3a1; margin-top: 20px; width: 100%;">Apply & Save Changes</button>
-        </div>
-      </div>
+    <div class="main-wrapper">
+        <aside class="sidebar">
+            <div class="nav-item active" data-target="page-server"><i class="fas fa-server"></i> Server</div>
+            <div class="nav-item" data-target="page-options"><i class="fas fa-cog"></i> Options</div>
+            <div class="nav-item" data-target="page-console"><i class="fas fa-terminal"></i> Console</div>
+            <div class="nav-item" data-target="page-log"><i class="fas fa-file-alt"></i> Log</div>
+            <div class="nav-item" data-target="page-players"><i class="fas fa-user-friends"></i> Players</div>
+            <div class="nav-item" data-target="page-backups"><i class="fas fa-save"></i> Backups</div>
+            
+            <div class="nav-item disabled"><i class="fas fa-code"></i> Software</div>
+            <div class="nav-item" data-target="page-files"><i class="fas fa-folder"></i> Files</div>
+            <div class="nav-item" data-target="page-worlds"><i class="fas fa-globe"></i> Worlds</div>
+            <div class="nav-item disabled"><i class="fas fa-share-alt"></i> Access</div>
+        </aside>
 
-      <div id="page-console" class="page">
-        <h1>Server Console</h1>
-        <div class="console">
-          > Orchestrator Engine Online.<br>
-          > All APIs loaded and ready.
-        </div>
-  
-        <div style="display: flex; gap: 10px; margin-top: 10px;">
-          <input type="text" id="cmd-input" placeholder="Enter server command (e.g. op Yagyapreet)..." style="flex-grow: 1;">
-          <button id="send-cmd-btn" style="background-color: #89b4fa; width: 100px; color: #1e1e2e;">Send</button>
-        </div>
-      </div>
-    </div>
-
-    <script>
-      const { downloadServer, startMinecraftProcess, stopMinecraftProcess, readProperties, writeProperties, setupPlayit, startPlayit, stopPlayit, getPublicIP, sendCommand, forceOfflineMode, waitForPublicIP, backupWorldToDrive } = require('./engine.js');
-      const startBtn = document.getElementById('start-btn');
-      const stopBtn = document.getElementById('stop-btn'); 
-      const propsBtn = document.getElementById('props-btn');
-      const typeSelect = document.getElementById('server-type'); 
-      const versionSelect = document.getElementById('mc-version');
-      const ramSelect = document.getElementById('ram-select');
-      
-      const propsModal = document.getElementById('props-modal');
-      const propsList = document.getElementById('props-list');
-      const consoleBox = document.querySelector('.console');
-      const cmdInput = document.getElementById('cmd-input');
-      const sendCmdBtn = document.getElementById('send-cmd-btn');
-
-      function logToConsole(message) {
-        consoleBox.innerHTML += `<br>> ${message}`;
-        consoleBox.scrollTop = consoleBox.scrollHeight;
-      }
-
-      // START BUTTON LOGIC
-      startBtn.addEventListener('click', async () => {
-        startBtn.disabled = true; 
-        startBtn.innerText = "Downloading JAR..."; 
-        startBtn.style.backgroundColor = "#f9e2af"; 
-        
-        logToConsole(`Initializing setup for ${typeSelect.value.toUpperCase()} ${versionSelect.value}...`);
-        const downloadedJarPath = await downloadServer(typeSelect.value, versionSelect.value);
-        
-        if (downloadedJarPath) {
-            forceOfflineMode(document.getElementById('cracked-toggle').checked);
-
-            if (document.getElementById('tunnel-toggle').checked) {
-                startBtn.innerText = "Provisioning Network..."; 
-                await setupPlayit();
-                startPlayit();
+        <main class="content">
+            <div class="container">
                 
-                try {
-                    await waitForPublicIP(20000); 
-                } catch (e) {
-                    logToConsole(`<span style="color: #f38ba8;">[Network Warning] IP took too long to generate. Booting anyway...</span>`);
-                }
-            }
-            
-            startBtn.innerText = "Server Running"; 
-            startBtn.style.backgroundColor = "#a6e3a1"; 
-            logToConsole(`Commencing boot sequence...`);
-            
-            // THE FIX: Passes a callback so the button unlocks when Java exits
-            startMinecraftProcess(downloadedJarPath, ramSelect.value, () => {
-                startBtn.disabled = false; 
-                startBtn.innerText = "Start Server"; 
-                startBtn.style.backgroundColor = "#a6e3a1"; 
-            });
-        } else {
-            startBtn.disabled = false; 
-            startBtn.innerText = "Start Server"; 
-            startBtn.style.backgroundColor = "#a6e3a1"; 
-        }
-      });
+                <div id="page-server" class="page active">
+                    <div class="connect-bar">
+                        <div class="connect-ip"><i class="fas fa-network-wired"></i> <span id="ip-display">network.magnesium.local</span></div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn-connect" id="reauth-btn" style="background: #2e3338;"><i class="fas fa-plug"></i> Re-link Drive</button>
+                        </div>
+                    </div>
 
-      // STOP BUTTON LOGIC
-      stopBtn.addEventListener('click', () => {
-          stopMinecraftProcess();
-          if (document.getElementById('tunnel-toggle').checked) {
-              stopPlayit();
-          }
-      });
+                    <div class="status-banner">
+                        <div class="status-left">
+                            <div class="status-icon" id="status-circle-ui"><i class="fas fa-times"></i></div>
+                            <div class="status-text" id="status-text-ui">Offline</div>
+                        </div>
+                        <button id="start-btn" class="btn-start"><i class="fas fa-play"></i> Start</button>
+                        <button id="stop-btn" class="btn-start stop"><i class="fas fa-stop"></i> Stop</button>
+                    </div>
 
-      // BACKUP BUTTON LOGIC
-      document.getElementById('backup-btn').addEventListener('click', async () => {
-          const btn = document.getElementById('backup-btn');
-          btn.disabled = true;
-          btn.innerText = "Zipping...";
-          btn.style.backgroundColor = "#f9e2af";
-          logToConsole(`[System] Compressing world data...`);
-          
-          const success = await backupWorldToDrive();
-          
-          if (success) {
-              btn.innerText = "Backup Saved!";
-              btn.style.backgroundColor = "#a6e3a1";
-              logToConsole(`<span style="color: #a6e3a1;">[System] World successfully uploaded to Google Drive!</span>`);
-          } else {
-              btn.innerText = "Backup Failed";
-              btn.style.backgroundColor = "#f38ba8";
-              logToConsole(`<span style="color: #f38ba8;">[System Error] Failed to upload backup. Check console logs.</span>`);
-          }
-          
-          setTimeout(() => {
-              btn.disabled = false;
-              btn.innerText = "☁️ Backup World";
-              btn.style.backgroundColor = "#89b4fa";
-          }, 4000);
-      });
+                    <div class="details-grid">
+                        <div class="detail-card">
+                            <div class="detail-icon"><i class="fas fa-code"></i></div>
+                            <div class="detail-info">
+                                <div class="detail-label">Software</div>
+                                <select id="server-type" style="border:none; padding:0; background:transparent; font-size:1.1rem; margin-top:0;">
+                                    <option value="paper" selected>Paper</option>
+                                    <option value="purpur">Purpur</option>
+                                    <option value="vanilla">Vanilla</option>
+                                    <option value="fabric">Fabric</option>
+                                </select>
+                            </div>
+                        </div>
 
-      // CONFIG BUTTON LOGIC
-      propsBtn.addEventListener('click', () => {
-          const currentProps = readProperties();
-          if (!currentProps) {
-              logToConsole(`[Error] You must boot a server at least once to generate the config file!`);
-              return;
-          }
+                        <div class="detail-card">
+                            <div class="detail-icon"><i class="fas fa-tag"></i></div>
+                            <div class="detail-info">
+                                <div class="detail-label">Version</div>
+                                <select id="mc-version" style="border:none; padding:0; background:transparent; font-size:1.1rem; margin-top:0;">
+                                    <option value="1.20.4">1.20.4</option>
+                                    <option value="1.19.4">1.19.4</option>
+                                    <option value="1.16.5">1.16.5</option>
+                                </select>
+                            </div>
+                        </div>
 
-          propsList.innerHTML = ''; 
-          
-          for (const [key, value] of Object.entries(currentProps)) {
-              const div = document.createElement('div');
-              div.className = 'prop-row';
+                        <div class="detail-card">
+                            <div class="detail-icon" style="background-color: var(--aternos-orange);"><i class="fas fa-memory"></i></div>
+                            <div class="detail-info">
+                                <div class="detail-label">RAM Allocation</div>
+                                <select id="ram-select" style="border:none; padding:0; background:transparent; font-size:1.1rem; margin-top:0;">
+                                    <option value="2">2048 MB</option>
+                                    <option value="4" selected>4096 MB</option>
+                                    <option value="6">6144 MB</option>
+                                    <option value="8">8192 MB</option>
+                                </select>
+                            </div>
+                        </div>
 
-              const label = document.createElement('label');
-              label.innerText = key;
+                        <div class="detail-card" onclick="document.getElementById('cracked-toggle').click()">
+                            <div class="detail-icon" style="background-color: #444;"><i class="fas fa-shield-alt"></i></div>
+                            <div class="detail-info">
+                                <div class="detail-label">Security Mode</div>
+                                <div style="display:flex; align-items:center; gap:10px; color: var(--text-white); font-size: 1.1rem;">
+                                    <input type="checkbox" id="cracked-toggle" style="accent-color: var(--aternos-blue); width: 16px; height: 16px; margin: 0;"> Cracked (Offline)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-              let input;
-              if (value === 'true' || value === 'false') {
-                  input = document.createElement('select');
-                  input.innerHTML = `<option value="true" ${value === 'true' ? 'selected' : ''}>True</option>
-                                     <option value="false" ${value === 'false' ? 'selected' : ''}>False</option>`;
-              } else {
-                  input = document.createElement('input');
-                  input.type = 'text';
-                  input.value = value;
-              }
-              
-              input.dataset.key = key;
-              div.appendChild(label); div.appendChild(input); propsList.appendChild(div);
-          }
-          
-          propsModal.style.display = propsModal.style.display === 'none' || propsModal.style.display === '' ? 'block' : 'none';
-      });
+                <div id="page-options" class="page">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                        <h1 style="font-size: 1.8rem; font-weight: 300;">Options</h1>
+                        <button id="load-props-btn" class="btn-connect" style="background: var(--aternos-blue); border:none;"><i class="fas fa-download"></i> Load Config</button>
+                    </div>
+                    <div id="props-list" class="details-grid" style="grid-template-columns: 1fr;"></div>
+                    <button id="save-props-btn" class="btn-start" style="width: 100%; justify-content: center; margin-top: 20px; display: none;"><i class="fas fa-save"></i> Save Properties</button>
+                </div>
 
-      // SAVE CONFIG BUTTON LOGIC
-      document.getElementById('save-props-btn').addEventListener('click', () => {
-          const newProps = {};
-          propsList.querySelectorAll('input, select').forEach(input => newProps[input.dataset.key] = input.value);
-          writeProperties(newProps);
-          propsModal.style.display = 'none';
-          logToConsole(`Server properties applied! Changes take effect on next boot.`);
-      });
+                <div id="page-console" class="page">
+                    <h1 style="font-size: 1.8rem; font-weight: 300; margin-bottom: 20px;">Console</h1>
+                    <div class="console-container">
+                        <div class="console-logs" id="console-box-ui">
+                            > Magnesium Orchestrator Engine Online.<br>
+                            > Ready for command input.
+                        </div>
+                        <div class="console-input">
+                            <input type="text" id="cmd-input" placeholder="Type a command...">
+                            <button id="send-cmd-btn"><i class="fas fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                </div>
 
-      // COMMAND SEND LOGIC
-      sendCmdBtn.addEventListener('click', () => {
-        const cmd = cmdInput.value.trim();
-        if (cmd) {
-          sendCommand(cmd);
-          cmdInput.value = '';
-        }
-      });
+                <div id="page-log" class="page">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+                        <h1 style="font-size: 1.8rem; font-weight: 300;">Log</h1>
+                        <div style="display:flex; gap:10px;">
+                            <button id="log-share-btn" class="btn-connect" style="background: var(--aternos-blue); border:none;"><i class="fas fa-share-alt"></i> Share</button>
+                            <button id="log-reload-btn" class="btn-connect"><i class="fas fa-sync-alt"></i></button>
+                        </div>
+                    </div>
+                    <div class="console-container">
+                        <div class="console-logs" id="log-viewer-box" style="white-space: pre-wrap;">Log file will appear here...</div>
+                    </div>
+                </div>
 
-      cmdInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          sendCmdBtn.click();
-        }
-      });
+                <div id="page-players" class="page">
+                    <h1 style="font-size: 1.8rem; font-weight: 300; margin-bottom: 20px;">Players</h1>
+                    <div class="details-grid">
+                        <div class="detail-card" onclick="openPlayerList('whitelist', 'Whitelist')" style="flex-direction: column; text-align: center; padding: 30px;">
+                            <i class="fas fa-list-ul" style="font-size: 3rem; margin-bottom: 10px;"></i>
+                            <h2 style="font-size: 1.5rem;">Whitelist</h2>
+                        </div>
+                        <div class="detail-card" onclick="openPlayerList('ops', 'Operators')" style="flex-direction: column; text-align: center; padding: 30px;">
+                            <i class="fas fa-star" style="font-size: 3rem; margin-bottom: 10px;"></i>
+                            <h2 style="font-size: 1.5rem;">OPs</h2>
+                        </div>
+                        <div class="detail-card" onclick="openPlayerList('banned-players', 'Banned Players')" style="flex-direction: column; text-align: center; padding: 30px;">
+                            <i class="fas fa-ban" style="font-size: 3rem; margin-bottom: 10px;"></i>
+                            <h2 style="font-size: 1.5rem;">Banned Players</h2>
+                        </div>
+                    </div>
+                </div>
 
-      // --- UI NAVIGATION ---
-      const navDashboardBtn = document.getElementById('nav-dashboard');
-      const navConsoleBtn = document.getElementById('nav-console');
-      const pageDashboard = document.getElementById('page-dashboard');
-      const pageConsole = document.getElementById('page-console');
+                <div id="page-player-list" class="page">
+                    <div style="display:flex; gap:15px; align-items:center; margin-bottom: 20px;">
+                        <button id="btn-back-players" class="btn-connect"><i class="fas fa-arrow-left"></i></button>
+                        <h1 id="player-list-title" style="font-size: 1.8rem; font-weight: 300;">List</h1>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-bottom: 20px;">
+                        <input type="text" id="player-add-input" placeholder="Username..." style="margin:0; background: var(--bg-card);">
+                        <button id="player-add-btn" class="btn-start" style="padding: 0 30px;"><i class="fas fa-plus"></i> Add</button>
+                    </div>
+                    <div id="player-list-container" style="display:flex; flex-direction:column; gap:8px;"></div>
+                </div>
 
-      navDashboardBtn.addEventListener('click', () => {
-          pageDashboard.classList.add('active');
-          pageConsole.classList.remove('active');
-      });
+                <div id="page-backups" class="page">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px;">
+                        <h1 style="font-size: 1.8rem; font-weight: 300; display:flex; align-items:center; gap:10px;">
+                            Backups <i class="fab fa-google-drive" style="color:var(--text-grey);"></i>
+                        </h1>
+                    </div>
+                    
+                    <button id="create-backup-page-btn" class="btn-start" style="margin-bottom: 25px; background: var(--aternos-blue); padding: 12px 30px; font-size: 1rem;"><i class="fas fa-plus"></i> Create backup</button>
+                    
+                    <div id="backup-list-container" style="display:flex; flex-direction:column; gap:10px;">
+                    </div>
+                </div>
 
-      navConsoleBtn.addEventListener('click', () => {
-          pageConsole.classList.add('active');
-          pageDashboard.classList.remove('active');
-      });
+                <div id="page-files" class="page">
+                    <h1 style="font-size: 1.8rem; margin-bottom: 20px; color: var(--aternos-blue); font-weight: bold;">Files</h1>
+                    
+                    <div class="file-path-bar">
+                        <div class="file-path-left">
+                            <i class="fas fa-home" id="file-home-btn"></i>
+                            <span id="current-file-path">/</span>
+                        </div>
+                        <div class="file-count"><i class="fas fa-folder"></i> <span id="file-count-display">0</span></div>
+                    </div>
 
-      // --- CONSOLE OVERRIDES & HIGHLIGHTER ---
-      const originalLog = console.log;
-      console.log = function(message) { 
-          if (typeof message === 'string' && message.includes('[Magnesium Network] IP Address:')) {
-              logToConsole(`<span style="color: #a6e3a1; font-weight: bold;">${message}</span>`);
-          } else {
-              logToConsole(message); 
-          }
-          originalLog(message); 
-      };
-      
-      const originalError = console.error;
-      console.error = function(message) { 
-          logToConsole(`<span style="color: #f38ba8;">${message}</span>`); 
-          originalError(message); 
-      };
-    
-      window.addEventListener('beforeunload', () => {
-          console.log("[System] App closing, terminating background processes...");
-          stopMinecraftProcess();
-          stopPlayit();
-      });
-      
-    </script>
-  </body>
+                    <div style="display:flex; justify-content:space-between; margin-bottom: 10px;">
+                        <button style="background: #353b45; border:none; color:white; padding: 8px 15px; border-radius:3px; font-weight:bold; cursor:pointer;"><i class="fas fa-list-ul"></i> Select</button>
+                        <button style="background: var(--aternos-blue); border:none; color:white; padding: 8px 15px; border-radius:3px; font-weight:bold; cursor:pointer;"><i class="fas fa-folder-plus"></i></button>
+                    </div>
+
+                    <div class="file-list" id="file-list-container">
+                    </div>
+                </div>
+
+                <div id="page-worlds" class="page">
+                    <h1 style="font-size: 1.8rem; font-weight: 300; margin-bottom: 20px;">Worlds</h1>
+                    
+                    <div class="world-card">
+                        <div class="world-left">
+                            <i class="fas fa-globe-americas world-icon"></i>
+                            <div class="world-name">world</div>
+                        </div>
+                        <div class="world-mid">
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <span style="color:var(--text-white); font-weight:bold;">Force upgrade</span>
+                                <input type="checkbox" style="width:20px; height:20px; accent-color:var(--aternos-red);">
+                            </div>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                <span style="color:var(--text-white); font-weight:bold;">Optimize</span>
+                                <input type="checkbox" checked style="width:20px; height:20px; accent-color:var(--aternos-green);">
+                            </div>
+                        </div>
+                        
+                        <div class="world-actions">
+                            <input type="file" id="hidden-zip-upload" accept=".zip" style="display:none;">
+                            <input type="file" id="hidden-folder-upload" webkitdirectory style="display:none;">
+
+                            <button class="world-btn blue" id="btn-download-world" onclick="downloadWorldZip()"><i class="fas fa-download"></i> Download</button>
+                            
+                            <div class="upload-dropdown">
+                                <button class="world-btn orange"><i class="fas fa-upload"></i> Upload</button>
+                                <div class="upload-dropdown-content">
+                                    <button class="dropdown-item" onclick="document.getElementById('hidden-folder-upload').click()"><i class="fas fa-folder"></i> Folder</button>
+                                    <button class="dropdown-item" onclick="document.getElementById('hidden-zip-upload').click()"><i class="fas fa-file-archive"></i> ZIP Archive</button>
+                                </div>
+                            </div>
+
+                            <button class="world-btn" onclick="openFolderInExplorer('world')"><i class="fas fa-folder-open"></i> Open Location</button>
+                            <button class="world-btn" onclick="navToPage('page-options')"><i class="fas fa-cog"></i> Options</button>
+                            <button class="world-btn" onclick="navToPage('page-files')"><i class="fas fa-folder"></i> Files</button>
+                            <button class="world-btn green" onclick="document.getElementById('generate-modal').style.display = 'flex'"><i class="fas fa-sync-alt"></i> Generate</button>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="generate-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <i class="fas fa-times" onclick="document.getElementById('generate-modal').style.display = 'none'"></i>
+            </div>
+            <div class="modal-body">
+                <div class="modal-warning">Your current world will be deleted!</div>
+                
+                <div class="modal-group">
+                    <label><i class="fas fa-globe"></i> World name</label>
+                    <input type="text" id="gen-name" value="world">
+                </div>
+                <div class="modal-group">
+                    <label><i class="fas fa-mountain"></i> Seed</label>
+                    <input type="text" id="gen-seed" placeholder="Random">
+                </div>
+                <div class="modal-group">
+                    <label><i class="fas fa-sliders-h"></i> Generator</label>
+                    <input type="text" id="gen-generator">
+                </div>
+                <div class="modal-group">
+                    <label>Worldtype</label>
+                    <select id="gen-type">
+                        <option value="minecraft:normal">minecraft:normal</option>
+                        <option value="minecraft:flat">minecraft:flat</option>
+                        <option value="minecraft:large_biomes">minecraft:large_biomes</option>
+                        <option value="minecraft:amplified">minecraft:amplified</option>
+                    </select>
+                </div>
+                <div class="modal-group">
+                    <label>Generate structures</label>
+                    <input type="checkbox" id="gen-structs" checked>
+                </div>
+                <div class="modal-group modal-group-col">
+                    <label style="width:100%; margin-bottom: 5px;">Datapacks</label>
+                    <input type="text" value="Vanilla" readonly style="width:100%; color:#9daab6;">
+                </div>
+                <div class="modal-group">
+                    <label>Hardcore</label>
+                    <input type="checkbox" id="gen-hardcore" class="red-toggle">
+                </div>
+
+                <button class="generate-submit" id="btn-confirm-generate">Generate</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="./ui.js" defer></script>
+</body>
 </html>

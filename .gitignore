@@ -7,5 +7,4 @@ servers/
 # Downloaded Network Agents
 bin/
 
-# Environment Variables (for when we add Supabase later)
 .env
